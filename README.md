@@ -1,0 +1,1 @@
+# Human variation STAR protocol
