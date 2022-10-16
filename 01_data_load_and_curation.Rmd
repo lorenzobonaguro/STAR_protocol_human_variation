@@ -1,0 +1,153 @@
+---
+title: "01 - Data load and curation"
+authors: "Lorenzo Bonaguro"
+output: html_document
+date: "2022-10-14"
+---
+
+# Libraries
+```{r}
+library(huva)
+library(stringr)
+library(ggplot2)
+library(pheatmap)
+```
+
+# Data load and cleaning
+
+## Loading Data
+```{r}
+GTEx_gene_reads <- read.delim("./data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct", 
+                              skip = 2, 
+                              stringsAsFactors = FALSE)
+
+GTEx_gene_tpm <- read.delim("./data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct", 
+                            skip = 2, 
+                            stringsAsFactors = FALSE)
+
+anno_donor_all <- read.delim("./data/GTEx_Analysis_v8_Annotations_SubjectPhenotypesDS.txt")
+
+anno_sample_all <- read.delim("./data/GTEx_Analysis_v8_Annotations_SampleAttributesDS.txt")
+```
+
+## Cleaning the data
+```{r}
+# In the sample annotation there are also samples which were not used for RNAseq, first I want to clean the annotation 
+# and have both on the same order, also in the sample table the "-" is used to separate the sample names, in the count table they used
+# a ".".
+
+RNAseq_samples <- colnames(GTEx_gene_reads[-c(1,2)])
+
+tmp <- anno_sample_all
+
+tmp$SAMPID <- str_replace_all(tmp$SAMPID, "-", ".")
+
+tmp <- tmp[tmp$SAMPID %in% RNAseq_samples,]
+
+anno_sample <- tmp
+
+#Check the order
+identical(anno_sample$SAMPID, RNAseq_samples)
+
+# Clean
+rm(tmp, RNAseq_samples)
+```
+
+## Merging sample anno and donor anno
+```{r}
+anno_sample$SUBJID <- paste("GTEX-",unlist(lapply(str_split(anno_sample$SAMPID, "\\.", simplify = FALSE), `[[`, 2)), sep = "")
+
+anno_sample <- merge(anno_sample, anno_donor_all, by = "SUBJID", all.x = TRUE, all.y = FALSE, sort = FALSE)
+
+identical(anno_sample$SAMPID, colnames(GTEx_gene_reads[-c(1,2)]))
+```
+
+# Data visualization
+
+## Metedata
+```{r}
+ggplot(data = as.data.frame(table(anno_sample$SMTS)), aes(x = Var1, y = Freq)) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept = 100, linetype = "dashed") +
+  ylab("nr. of samples") +
+  xlab("") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r, fig.width=10}
+ggplot(data = as.data.frame(table(anno_sample$SMTSD)), aes(x = Var1, y = Freq)) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept = 100, linetype = "dashed") +
+  ylab("nr. of samples") +
+  xlab("") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
+```{r}
+ggplot(data = as.data.frame(table(anno_donor_all$SEX)), aes(x = Var1, y = Freq)) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept = 100, linetype = "dashed") +
+  scale_x_discrete(labels = c("male", "female")) +
+  ylab("nr. of samples") +
+  xlab("") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
+```{r}
+ggplot(data = as.data.frame(table(anno_donor_all$AGE)), aes(x = Var1, y = Freq)) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept = 100, linetype = "dashed") +
+  ylab("nr. of samples") +
+  xlab("") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
+```{r, fig.width=6, fig.height=15}
+pheatmap(table(anno_sample$SMTSD, anno_sample$SMNABTCHT), display_numbers = TRUE)
+```
+
+# Filter dataset
+```{r}
+rownames(GTEx_gene_reads) <- GTEx_gene_reads$Name
+rownames(GTEx_gene_tpm) <- GTEx_gene_tpm$Name
+
+identical(rownames(GTEx_gene_reads), rownames(GTEx_gene_tpm))
+
+gene_to_symbol <- GTEx_gene_reads[, 1:2]
+```
+
+```{r}
+GTEx_dataset <- list()
+
+for (tissue in anno_sample$SMTSD) {
+  
+  anno <- anno_sample[anno_sample$SMTSD == tissue, ]
+  
+  data_orig <- GTEx_gene_reads[, anno$SAMPID]
+  
+  data_tpm <- GTEx_gene_tpm[, anno$SAMPID]
+  
+  GTEx_dataset[[tissue]][["anno"]] <- anno
+  
+  GTEx_dataset[[tissue]][["data_orig"]] <- data_orig
+  
+  GTEx_dataset[[tissue]][["data_tpm"]] <- data_tpm
+  
+}
+```
+
+# Save the dataset
+```{r}
+saveRDS(object = GTEx_dataset, file = "/data/dzne_home/GTEx_v8_data/data/221016_GTEx_dataset_LB.rds")
+```
+
+# Session Info
+```{r}
+info <- sessionInfo()
+
+info
+```
