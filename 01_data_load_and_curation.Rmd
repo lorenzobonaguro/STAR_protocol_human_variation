@@ -143,6 +143,8 @@ for (tissue in anno_sample$SMTSD) {
 # Save the dataset
 ```{r}
 saveRDS(object = GTEx_dataset, file = "/data/dzne_home/GTEx_v8_data/data/221016_GTEx_dataset_LB.rds")
+
+saveRDS(object = gene_to_symbol, file = "/data/dzne_home/GTEx_v8_data/data/221016_gene_to_symbol.rds")
 ```
 
 # Session Info
