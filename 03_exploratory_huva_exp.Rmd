@@ -1,0 +1,138 @@
+---
+title: "03_exploratory_huva_exp"
+output: html_document
+---
+
+### Load huva
+
+```{r setup, warning=F}
+library(huva)
+library(huva.db)
+library(useful)
+```
+
+# Exploratory huva experiment
+
+As a first exploratory step, the expression of the selected GOI is compared across specified datasets and correlated with available metadata, in order to unveil the possible influence of buried variables on gene expression. This approach provides a quick overview of GOI expression across databases and cell types, helping to shape downstream analyses.
+
+## Defining the gene name
+
+The gene name can be set as an environment variable to be automatically grabbed by all functions.
+
+```{r}
+gene_name <- "MYD88"
+```
+
+## Gene examination experiment
+
+This function looks into the expression of the GOI in the specified dataset or across other user-provided datasets. If the GOI is not present in the dataset, a warning message will be displayed.
+
+```{r}
+gene_overview <- gene_exam(huva_dataset = huva.db, gene = gene_name)
+```
+
+## Explore variance in gene expression
+
+### Expression table
+
+The GOI expression table in selected datasets is exported as a data.frame reporting sample names as rownames and expression values in a single column.
+
+```{r}
+expr_exam <- get_expr_exam(huva_expression = gene_overview, study = "ImmVar", dataset = "ImmVar_CD4T")
+```
+
+Here you can visualize the dataframe format.
+
+```{r}
+head(expr_exam)
+```
+
+### Expression plot
+
+The expression of the GOI is plotted across all datasets to inspect possible distribution differences.
+
+```{r}
+expr_exam.plot <- get_expr.plot_exam(huva_expression = gene_overview, bins = 50, alpha = 1)
+```
+
+```{r}
+expr_exam.plot
+```
+
+## Correlation with annotated parameters
+
+In large cohort studies, several additional parameters (such as sex, age or height) associated to each donor are often provided. This allows to infer possible correlations between GOI expression and these annotated variables. We can easily perform this analysis working on the gene_overview experiment.
+
+### Annotated table
+
+First, the comprehensive table reporting all the available annotation parameters for the selected dataset is extracted from the gene_overview exploratory huva experiment.
+
+```{r}
+anno_exam <- get_anno_exam(huva_expression = gene_overview, study = "CEDAR", dataset = "CEDAR_CD4T")
+
+corner(anno_exam)
+```
+
+### Correlation statistics
+
+The get_anno.stat_exam function performs a statistical correlation between the GOI expression and each of the parameters provided in the annotation table.
+
+```{r}
+anno.stat_exam <- get_anno.stat_exam(huva_expression = gene_overview, study = "FG500", dataset = "ALL")
+
+corner(anno.stat_exam)
+```
+
+### Correlation plot
+
+Correlations can be graphically visualized with the get_anno.plot_exam function, whose format is similar to the previous one and produces an output containing a list of graphical objects.
+
+```{r}
+anno.plot_exam <- get_anno.plot_exam(huva_expression = gene_overview, study = "FG500", dataset = "FG500_whole_blood")
+
+anno.plot_exam$gender
+
+anno.plot_exam$height
+```
+
+## Metadata investigation
+
+The most recent cohort studies generally perform a series of additional independent experiments in parallel to the transcriptome analysis. This multi-dimensionality of data allows the correlation of gene expression with phenotypical parameters typical of immune cells, such as the relative amount of each cell type or cytokines production.
+
+### Metadata table
+
+Selected databases included in this package (CERAR and 500FG) include metadata information. The correlation of gene expression with these metadata can be investigated with the get_meta_exam, get_meta.stat_exam and get_meta.plot_exam functions.
+
+```{r}
+meta.table_exam <- get_meta_exam(huva_expression = gene_overview, study = "FG500")
+
+corner(meta.table_exam$FG500_whole_blood_cellcount)
+```
+
+### Metadata correlation statistics
+
+Statistical analysis of the influence of provided metadata on the GOI expression is performed by the function get_meta.stat_exam which reports it on a data.frame or list of data.frames.
+
+```{r}
+meta.stat_exam <- get_meta.stat_exam(huva_expression = gene_overview, study = "FG500", dataset = "FG500_whole_blood_cellcount")
+
+corner(meta.stat_exam$FG500_whole_blood_cellcount)
+```
+
+### Metadata correlation dotplot
+
+Metadata correlations are visualized in a dotplot. Also in this case, the get_meta.plot_exam function will quickly provide a list of graphical objects.
+
+```{r}
+meta.plot_exam <- get_meta.plot_exam(huva_expression = gene_overview, study = "FG500", dataset = "FG500_whole_blood_cellcount")
+
+meta.plot_exam$`Monocytes (CD14+)`
+```
+
+# Session Info
+```{r}
+info <- sessionInfo()
+
+info
+```
+

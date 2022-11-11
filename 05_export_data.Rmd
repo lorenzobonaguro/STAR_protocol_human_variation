@@ -1,0 +1,80 @@
+---
+title: "04_huva_gene_experiment"
+output: html_document
+---
+
+### Load huva
+
+```{r setup, warning=F}
+library(huva)
+library(huva.db)
+library(useful)
+```
+
+# huva experiment
+
+```{r}
+gene_name <- "MYD88"
+```
+
+```{r, warning=F}
+set.seed(1234)
+
+exper <- run_huva_experiment(data = huva.db, 
+                                      gene = gene_name, 
+                                      quantiles = 0.10, 
+                                      gs_list = hallmarks_V7.2,
+                                      summ = T, 
+                                      datasets_list = NULL, 
+                                      adjust.method = "BH")
+```
+
+# Data Export
+
+## Export the filtered expression table for the ImmVar CD4+ T cell dataset
+```{r}
+exper$ImmVar$data$ImmVar_CD4T
+```
+
+## Export the filtered annotation table for the CEDAR CD8+ T cell dataset
+```{r}
+exper$CEDAR$anno$CEDAR_CD8T
+```
+
+## Export DE genes table from the CEDAR monocytes dataset
+```{r}
+exper$CEDAR$DE_genes$CEDAR_CD14M
+```
+
+## Export the ranked gene list from the monocytes dataset
+```{r}
+exper$ImmVar$Rank_genelist$ImmVar_CD14M
+```
+
+## Export GSEA results from the CEDAR Granulocytes dataset
+```{r}
+exper$CEDAR$gsea$CEDAR_CD15G
+```
+
+## Export filtered cell count metadata table from the FG500 PBMC dataset
+```{r}
+exper$FG500$metadata$FG500_whole_blood_cellcount
+```
+
+## Export summary statistics from CEDAR CD8+ T cell sample annotation
+```{r}
+exper$summary$anno$CEDAR_CD8T
+```
+
+##  Export summary statistics from FG500 PBMC cytokines secretion metadata
+```{r}
+exper$summary$metadata$FG500_whole_blood_cytokines
+```
+
+# Session Info
+```{r}
+info <- sessionInfo()
+
+info
+```
+

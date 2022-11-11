@@ -6,6 +6,8 @@ date: "2022-10-14"
 ---
 
 # Libraries
+
+## Loading
 ```{r}
 library(huva)
 library(huva.db)
@@ -24,7 +26,7 @@ gene_to_symbol <- readRDS("./data/221016_gene_to_symbol.rds")
 ```{r}
 gtex_data <- list()
 
-gtex_data[["whole_blood"]] <- as.matrix(GTEx_dataset$`Whole Blood`$data_tpm)
+gtex_data[["whole_blood"]] <- as.matrix(GTEx_dataset$`Whole Blood`$data_orig)
 
 gtex_anno <- list()
 
@@ -36,8 +38,20 @@ gtex_anno$whole_blood <- gtex_anno$whole_blood[, c(1,2, 65, 66, 67)]
 rownames(gtex_anno$whole_blood) <- gtex_anno$whole_blood$SAMPID
 
 identical(colnames(gtex_data$whole_blood), rownames(gtex_anno$whole_blood))
+```
 
-gtex.db <- generate_huva_dataset(dataset_name = "whole_blood_GTEx_v8", 
+## Inspect the structure
+```{r}
+str(gtex_data)
+```
+
+```{r}
+str(gtex_anno)
+```
+
+## Prepare the huva.db
+```{r}
+gtex.db <- generate_huva_dataset(dataset_name = "GTEx_v8", 
                                  data = "gtex_data", 
                                  annotation = "gtex_anno", combine = FALSE)
 
@@ -45,26 +59,9 @@ rm(gtex_anno, gtex_data)
 ```
 
 ```{r}
-gene_overview_new <- gene_exam(huva_dataset = gtex.db, gene = "ENSG00000163703.17")
-```
+str(gtex.db)
 
-```{r}
-gene_overview_new$plot$whole_blood_GTEx_v8_whole_blood
-```
-
-
-```{r}
-binned_dataset_new <- run_huva_experiment(data = gtex.db,
-                                        gene = "ENSG00000163703.17",
-                                        quantiles = 0.05,
-                                        gs_list = hallmarks_V7.2,
-                                        summ = T,
-                                        datasets_list = NULL,
-                                        adjust.method = "none")
-```
-
-```{r}
-binned_dataset_new$whole_blood_GTEx_v8$DE_genes$whole_blood_GTEx_v8_whole_blood["ENSG00000163703.17", ]
+class(gtex.db)
 ```
 
 # Session Info

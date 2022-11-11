@@ -1,0 +1,212 @@
+---
+title: "04_huva_gene_experiment"
+output: html_document
+---
+
+### Load huva
+
+```{r setup, warning=F}
+library(huva)
+library(huva.db)
+library(useful)
+```
+
+# huva experiment
+
+The huva experiment is performed consecutively on all the included datasets. Differential expression analysis is performed using the limma R package using the experimental groups in the design model, p value correction for multiple tests and fold change cut-off for each experiment reported. GSEA within the huva function is performed with the R package fgsea with standard setting (1000 random permutations), the gene rank used for GSEA is calculated according to the log2 fold change in the comparison between the low and high groups. The results of the huva experiment are collected in a huva_experiment R object used as input for next provided functions to explore the output for each dataset.
+
+Funtion parameters to be defined:
+
+- data: huva_dataset class object.
+- quantiles: definition of the quantile of segregation of the samples, quantiles are always simmetrical between high and low groups. If not differently stated, a quantile of 0.1 (10%) is employed as default (quantile 0.1 will use the 10th and 90th percentiles)
+- gs_list: class list object defining gene sets to be included in the analysis (to generate this file see the documentation of fgse)
+- summ: default is TRUE, it defines if the summary of the huva experiment will be calculated.
+- datasets_list: character vector used to filter the dataset in the data object for the analysis
+- adjust.method: p value adjustment method used to correct the DE genes analysis
+
+## Defining the gene name
+
+The gene name can be set as an environment variable to be automatically grabbed by all functions.
+
+```{r}
+gene_name <- "MYD88"
+```
+
+```{r, warning=F}
+set.seed(1234)
+
+binned_dataset <- run_huva_experiment(data = huva.db, 
+                                      gene = gene_name, 
+                                      quantiles = 0.10, 
+                                      gs_list = hallmarks_V7.2,
+                                      summ = T, 
+                                      datasets_list = NULL, 
+                                      adjust.method = "BH")
+```
+
+## Exploring the huva experiment
+
+Results of the huva experiment are stored in a "huva_experiment" object and can be easily visualized with several provided functions.
+
+### Plotting of selected genes_huva experiment
+
+The expression of selected genes in the two newly generated low- and high- groups can be plotted and can be visualized across the different dataset provided during the huva experiment.
+
+```{r}
+plot_binned <- plot_binned_gene(goi = c("MYD88", "CRELD1", "STAT1", "RCAN3"), huva_experiment = binned_dataset)
+
+plot_binned$FG500_whole_blood
+```
+
+### Expression table_huva experiment
+
+The expression table resulting from the huva experiment can be retrieved as data.frame with the function get_exp_huva.
+
+```{r}
+expr_huva <- get_expr_huva(huva_exp = binned_dataset, study = "FG500", dataset = "FG500_whole_blood")
+
+corner(expr_huva)
+```
+
+### huva experiment annotation 
+
+#### Annotation table_huva experiment
+
+The function get_anno_huva produces a filtered annotation table including only donors belonging to the huva experiment groups.
+
+```{r}
+anno_huva <- get_anno_huva(huva_exp = binned_dataset, study = "FG500")
+
+corner(anno_huva$FG500_whole_blood)
+```
+
+#### Group annotation statistics_huva experiment
+
+Differences in the annotation parameters within the two groups are statistically explored with the function get_anno.stat.huva.
+
+```{r}
+anno.stat <- get_anno.stat_huva(huva_exp = binned_dataset, study = "FG500")
+
+anno.stat$FG500_whole_blood$age
+```
+
+#### Plotting huva groups donors distribution
+
+The distribution of donors in the two huva groups is correlated to the available annotation parameters with the get_anno.plot_huva function.
+
+```{r}
+anno.plot <- get_anno.plot_huva(huva_exp = binned_dataset, study = "FG500")
+
+anno.plot$FG500_whole_blood$age 
+```
+
+### Get DE genes between huva high- and low-groups
+
+Within each of the provided datasets, the huva experiment calculates the differentially expressed (DE) genes between the "low" and "high" groups. The DE gene list can be explored and visualized with the get_DE_huva function. In this function, the p-value (pval) and logFC (logFC) cutoffs can also be specified (default is pval=0.05 and logFC=1). Along with providing the DE genes table, this function also performs the Principal Component Analysis (PCA), which can be plotted over the desidered components (PC, default = c("PC1", "PC2")).
+
+```{r}
+DE_huva <- get_DE_huva(huva_exp = binned_dataset, study = "FG500", dataset = "FG500_whole_blood", pval = 0.001, logFC = 1)
+```
+
+The Principal Component Analysis (PCA) can be retrieved from the output of the get_DE_huva function.
+
+```{r}
+DE_huva$PCA_FG500_whole_blood
+```
+
+The list of DE genes with associated statistics is then recovered.
+
+```{r}
+corner(DE_huva$FG500_whole_blood)
+```
+
+A quick bar plot overview on the distribution of DE genes together with a DE genes expression heatmap are also included in the output of the get_DE_huva function.
+
+```{r}
+DE_huva$plot_FG500_whole_blood
+```
+
+```{r}
+plot_HM(DE_huva$HM_FG500_whole_blood)
+```
+
+### Ranked gene list_huva experiment
+
+The function get_rank_huva extracts the log2FC-ranked gene list from the comparison between the "low" and "high" groups.
+
+```{r}
+#add the normal ranking file
+rank_huva <- get_rank_huva(huva_exp = binned_dataset, study = "ImmVar", dataset = NULL, n_top_genes = 5)
+
+rank_huva$ImmVar_CD4T
+```
+
+Withing this function, a graphical representation is included.
+
+```{r}
+rank_huva$plot_ImmVar_CD4T
+```
+
+### GSEA on huva ranked gene list
+
+Gene set enrichment analysis (GSEA) is performed on user-defined huva experiment ranked lists. By default, the huva experiment works on hallmark gene sets. A table with the enrichment-associated statistics can be retrieved using the function get_gsea_huva. The function provides a Volcano plot reporting the normalized enriched score (NES) of enriched terms in x-axis with the associated -log10 p value (-log10pval) in y-axis. Set int_plot=TRUE to get also the Volcano plot interactive version.
+
+```{r}
+gsea_huva <- get_gsea_huva(huva_exp = binned_dataset, study = "FG500")
+
+corner(gsea_huva$FG500_whole_blood)
+```
+
+The output of the function includes a Volcano plot reporting the normalized enriched score (NES) in x-axis and the -log10 p value (-log10pval) in y-axis.
+
+```{r}
+gsea_huva$plot_FG500_whole_blood
+```
+
+If int_plot is set to TRUE, also the Volcano interactive plot will be produced which allows an easier inspection of the GSEA results.
+
+```{r}
+gsea_huva$int_plot_FG500_whole_blood
+```
+
+### Metadata investigation_huva experiment
+
+Also "low" and "high" huva groups metadata can be investigated with the functions get_meta_exp, get_meta.stat_huva, get_meta.plot_huva. These functions implement metadata tables with, respectively, 1) group information, 2) statistical analysis and 3) graphical representation.
+
+#### Metadata table_huva experiment
+
+This function returns the metadata table of the huva_experiment groups as a data.frame.
+
+```{r}
+meta_huva <- get_meta_huva(huva_exp = binned_dataset, study = "FG500")
+
+corner(meta_huva$FG500_whole_blood_cellcount)
+```
+
+#### Metadata statistics_huva experiment
+
+Within the two groups, statistical differences in metadata parameters can be explored with the function get_meta.stat.huva.
+
+```{r}
+meta.stat <- get_meta.stat_huva(huva_exp = binned_dataset, study = "FG500", dataset = "FG500_whole_blood_cellcount")
+
+corner(meta.stat)
+```
+
+#### Metadata plots_huva experiment
+
+Also for the huva experiment, the graphical representation of the distribution of individuals across the two huva groups can be visualiuzed in correlation to metadata parameters with the get_anno.plot_huva function.
+
+```{r}
+meta.plot <- get_meta.plot_huva(huva_exp = binned_dataset, study = "FG500")
+
+meta.plot$FG500_whole_blood_cellcount$`Monocytes (CD14+)`
+```
+
+# Session Info
+```{r}
+info <- sessionInfo()
+
+info
+```
+
