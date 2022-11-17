@@ -23,7 +23,7 @@ The following data were used for the analysis:
 
 ## 02 - Preparation of the *huva.db* including the GTEx V8 data
 
-Here we provide an exemplary script to generate a new *huva* database, fro here you can see the structure needed in the input files and how to generate the database. 
+Here we provide an exemplary script to generate a new *huva* database, from here you can see the structure needed in the input files and how to generate the database. 
 
 ## 03 - Run an *exploratory gene experiment*
 
