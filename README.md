@@ -43,7 +43,7 @@ If you want to know more about *huva* take a look at the following resources:
 
 - Original manuscript: [Human variation in population-wide gene expression data predicts gene perturbation phenotype; Bonaguro at al. 2022](https://www.cell.com/iscience/fulltext/S2589-0042(22)01600-5#%20)
 
-- STAR Protocol: [huva: a human variation analysis framework to predict gene perturbation; Aschenbrenner at al. 2022](XX)
+- STAR Protocol: [huva: a human variation analysis framework to predict gene perturbation; Aschenbrenner at al. 202X - submitted](XX)
 
 - *Huva* source code: [Git](https://github.com/lorenzobonaguro/huva)
 
